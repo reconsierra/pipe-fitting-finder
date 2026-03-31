@@ -131,6 +131,16 @@ main {
   min-height: 1.2em; letter-spacing: 0.05em; text-transform: uppercase;
 }
 .state-bar .hi { color: var(--red); font-weight: 600; }
+.pipe-section { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.pipe-section-label {
+  font-family: var(--mono); font-size: 9px; font-weight: 500;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
+  display: block;
+}
+.pipe-section-note {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  margin-top: 5px; font-style: italic;
+}
 .tol-note {
   font-family: var(--mono); font-size: 10px; color: var(--muted);
   background: rgba(204,0,0,0.06); border-left: 3px solid var(--red); color: var(--muted);
@@ -184,7 +194,7 @@ main {
 }
 .result-card.close-match { border-left-color: var(--yellow); }
 .result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.result-name { font-size: 22px; font-weight: 900; letter-spacing: 0.02em; color: #fff; }
+.result-name { font-size: 22px; font-weight: 900; letter-spacing: 0.02em; color: var(--text); }
 .badge {
   font-family: var(--mono); font-size: 9px; font-weight: 600;
   padding: 3px 10px; border-radius: 2px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -242,7 +252,7 @@ main {
         <div class="pick-img-wrap"><img id="imgMetric" alt="Metric fitting" /></div>
         <div class="pick-label">
           <strong>Metric</strong>
-          <em>ISO &mdash; M4 &middot; M5 &middot; M6 &middot; M8 &middot; M10 &middot; M12 &middot; M16 </em>
+          <em>ISO &mdash; M4 &middot; M5 &middot; M6 &middot; M8 &middot; M10 &middot; M12 &middot; M16</em>
         </div>
       </button>
       <button class="pick-btn" id="pickImperial" tabindex="0">
@@ -250,7 +260,7 @@ main {
         <div class="pick-img-wrap"><img id="imgImperial" alt="Imperial fitting" /></div>
         <div class="pick-label">
           <strong>Imperial</strong>
-          <em>BSPT / NPT &mdash; 5/32&Prime; &middot; 1/8&Prime; &middot; 1/4&Prime; &middot; 3/8&Prime; &middot; 1/2&Prime; &middot; 5/8&Prime; &middot; 3/4&Prime; &middot; 1&Prime;</em>
+          <em>BSPT / NPT &mdash; 1/8&Prime; &middot; 1/4&Prime; &middot; 3/8&Prime; &middot; 1/2&Prime; &middot; 5/8&Prime; &middot; 3/4&Prime; &middot; 1&Prime;</em>
         </div>
       </button>
     </div>
@@ -280,7 +290,7 @@ main {
   document.getElementById('imgMetric').src   = METRIC_SRC;
   document.getElementById('imgImperial').src = IMPERIAL_SRC;
 
-  var DATASET = {"schemaVersion":"1.1","tolerancesMm":{"maleThreadOD":0.3,"femaleOpeningID":0.4,"maleBoreID":0.3},"systems":{"metric":{"label":"Metric","entries":[{"id":"METRIC_M5","standard":"ISO metric","designation":"M5 x 0.8","measurements":{"maleThreadOD":{"nom":5.0,"min":4.7,"max":5.3,"unit":"mm"},"femaleOpeningID":{"nom":4.2,"min":3.8,"max":4.6,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M6","standard":"ISO metric","designation":"M6 x 1.0","measurements":{"maleThreadOD":{"nom":6.0,"min":5.7,"max":6.3,"unit":"mm"},"femaleOpeningID":{"nom":5.0,"min":4.6,"max":5.4,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M8","standard":"ISO metric","designation":"M8 x 1.25","measurements":{"maleThreadOD":{"nom":8.0,"min":7.7,"max":8.3,"unit":"mm"},"femaleOpeningID":{"nom":6.8,"min":6.4,"max":7.2,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M10","standard":"ISO metric","designation":"M10 x 1.5","measurements":{"maleThreadOD":{"nom":10.0,"min":9.7,"max":10.3,"unit":"mm"},"femaleOpeningID":{"nom":8.5,"min":8.1,"max":8.9,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M12","standard":"ISO metric","designation":"M12 x 1.75","measurements":{"maleThreadOD":{"nom":12.0,"min":11.7,"max":12.3,"unit":"mm"},"femaleOpeningID":{"nom":10.2,"min":9.8,"max":10.6,"unit":"mm"},"maleBoreID":null}}]},"imperial":{"label":"Imperial","entries":[{"id":"BSPT_R1-8","standard":"BSPT","designation":"R 1/8","nominalInch":"1/8\"","measurements":{"maleThreadOD":{"nom":9.728,"min":9.428,"max":10.028,"unit":"mm"},"femaleOpeningID":{"nom":8.495,"min":8.095,"max":8.895,"unit":"mm"},"maleBoreID":{"nom":6.0,"min":5.7,"max":6.3,"unit":"mm"}}},{"id":"BSPT_R1-4","standard":"BSPT","designation":"R 1/4","nominalInch":"1/4\"","measurements":{"maleThreadOD":{"nom":13.157,"min":12.857,"max":13.457,"unit":"mm"},"femaleOpeningID":{"nom":11.341,"min":10.941,"max":11.741,"unit":"mm"},"maleBoreID":{"nom":8.0,"min":7.7,"max":8.3,"unit":"mm"}}},{"id":"BSPT_R3-8","standard":"BSPT","designation":"R 3/8","nominalInch":"3/8\"","measurements":{"maleThreadOD":{"nom":16.662,"min":16.362,"max":16.962,"unit":"mm"},"femaleOpeningID":{"nom":14.846,"min":14.446,"max":15.246,"unit":"mm"},"maleBoreID":{"nom":10.0,"min":9.7,"max":10.3,"unit":"mm"}}},{"id":"BSPT_R1-2","standard":"BSPT","designation":"R 1/2","nominalInch":"1/2\"","measurements":{"maleThreadOD":{"nom":20.955,"min":20.655,"max":21.255,"unit":"mm"},"femaleOpeningID":{"nom":18.489,"min":18.089,"max":18.889,"unit":"mm"},"maleBoreID":{"nom":15.0,"min":14.7,"max":15.3,"unit":"mm"}}},{"id":"BSPT_R3-4","standard":"BSPT","designation":"R 3/4","nominalInch":"3/4\"","measurements":{"maleThreadOD":{"nom":26.441,"min":26.141,"max":26.741,"unit":"mm"},"femaleOpeningID":{"nom":23.975,"min":23.575,"max":24.375,"unit":"mm"},"maleBoreID":{"nom":20.0,"min":19.7,"max":20.3,"unit":"mm"}}},{"id":"BSPT_R1","standard":"BSPT","designation":"R 1","nominalInch":"1\"","measurements":{"maleThreadOD":{"nom":33.249,"min":32.949,"max":33.549,"unit":"mm"},"femaleOpeningID":{"nom":30.111,"min":29.711,"max":30.511,"unit":"mm"},"maleBoreID":{"nom":25.0,"min":24.7,"max":25.3,"unit":"mm"}}},{"id":"NPT_1-8NPT","standard":"NPT","designation":"1/8 NPT","nominalInch":"1/8\"","measurements":{"maleThreadOD":{"nom":10.287,"min":9.987,"max":10.587,"unit":"mm"},"femaleOpeningID":{"nom":8.738,"min":8.338,"max":9.138,"unit":"mm"},"maleBoreID":{"nom":6.0,"min":5.7,"max":6.3,"unit":"mm"}}},{"id":"NPT_1-4NPT","standard":"NPT","designation":"1/4 NPT","nominalInch":"1/4\"","measurements":{"maleThreadOD":{"nom":13.716,"min":13.416,"max":14.016,"unit":"mm"},"femaleOpeningID":{"nom":11.125,"min":10.725,"max":11.525,"unit":"mm"},"maleBoreID":{"nom":8.0,"min":7.7,"max":8.3,"unit":"mm"}}},{"id":"NPT_3-8NPT","standard":"NPT","designation":"3/8 NPT","nominalInch":"3/8\"","measurements":{"maleThreadOD":{"nom":17.145,"min":16.845,"max":17.445,"unit":"mm"},"femaleOpeningID":{"nom":14.681,"min":14.281,"max":15.081,"unit":"mm"},"maleBoreID":{"nom":10.0,"min":9.7,"max":10.3,"unit":"mm"}}},{"id":"NPT_1-2NPT","standard":"NPT","designation":"1/2 NPT","nominalInch":"1/2\"","measurements":{"maleThreadOD":{"nom":21.336,"min":21.036,"max":21.636,"unit":"mm"},"femaleOpeningID":{"nom":18.263,"min":17.863,"max":18.663,"unit":"mm"},"maleBoreID":{"nom":15.0,"min":14.7,"max":15.3,"unit":"mm"}}},{"id":"NPT_3-4NPT","standard":"NPT","designation":"3/4 NPT","nominalInch":"3/4\"","measurements":{"maleThreadOD":{"nom":26.67,"min":26.37,"max":26.97,"unit":"mm"},"femaleOpeningID":{"nom":23.419,"min":23.019,"max":23.819,"unit":"mm"},"maleBoreID":{"nom":20.0,"min":19.7,"max":20.3,"unit":"mm"}}},{"id":"NPT_1NPT","standard":"NPT","designation":"1 NPT","nominalInch":"1\"","measurements":{"maleThreadOD":{"nom":33.401,"min":33.101,"max":33.701,"unit":"mm"},"femaleOpeningID":{"nom":29.362,"min":28.962,"max":29.762,"unit":"mm"},"maleBoreID":{"nom":25.0,"min":24.7,"max":25.3,"unit":"mm"}}}]}}};
+  var DATASET = {"schemaVersion":"1.1","tolerancesMm":{"maleThreadOD":0.3,"femaleOpeningID":0.4,"maleBoreID":0.3},"systems":{"metric":{"label":"Metric","entries":[{"id":"METRIC_M4","standard":"ISO metric","designation":"M4 x 0.7","measurements":{"maleThreadOD":{"nom":4.0,"min":3.7,"max":4.3,"unit":"mm"},"femaleOpeningID":{"nom":3.3,"min":2.9,"max":3.7,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M5","standard":"ISO metric","designation":"M5 x 0.8","measurements":{"maleThreadOD":{"nom":5.0,"min":4.7,"max":5.3,"unit":"mm"},"femaleOpeningID":{"nom":4.2,"min":3.8,"max":4.6,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M6","standard":"ISO metric","designation":"M6 x 1.0","measurements":{"maleThreadOD":{"nom":6.0,"min":5.7,"max":6.3,"unit":"mm"},"femaleOpeningID":{"nom":5.0,"min":4.6,"max":5.4,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M8","standard":"ISO metric","designation":"M8 x 1.25","measurements":{"maleThreadOD":{"nom":8.0,"min":7.7,"max":8.3,"unit":"mm"},"femaleOpeningID":{"nom":6.8,"min":6.4,"max":7.2,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M10","standard":"ISO metric","designation":"M10 x 1.5","measurements":{"maleThreadOD":{"nom":10.0,"min":9.7,"max":10.3,"unit":"mm"},"femaleOpeningID":{"nom":8.5,"min":8.1,"max":8.9,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M12","standard":"ISO metric","designation":"M12 x 1.75","measurements":{"maleThreadOD":{"nom":12.0,"min":11.7,"max":12.3,"unit":"mm"},"femaleOpeningID":{"nom":10.2,"min":9.8,"max":10.6,"unit":"mm"},"maleBoreID":null}},{"id":"METRIC_M16","standard":"ISO metric","designation":"M16 x 2.0","measurements":{"maleThreadOD":{"nom":16.0,"min":15.7,"max":16.3,"unit":"mm"},"femaleOpeningID":{"nom":13.8,"min":13.4,"max":14.2,"unit":"mm"},"maleBoreID":null}}]},"imperial":{"label":"Imperial","entries":[{"id":"BSPT_R1-8","standard":"BSPT","designation":"R 1/8","nominalInch":"1/8\"","measurements":{"maleThreadOD":{"nom":9.728,"min":9.428,"max":10.028,"unit":"mm"},"femaleOpeningID":{"nom":8.495,"min":8.095,"max":8.895,"unit":"mm"},"maleBoreID":{"nom":6.0,"min":5.7,"max":6.3,"unit":"mm"}}},{"id":"BSPT_R1-4","standard":"BSPT","designation":"R 1/4","nominalInch":"1/4\"","measurements":{"maleThreadOD":{"nom":13.157,"min":12.857,"max":13.457,"unit":"mm"},"femaleOpeningID":{"nom":11.341,"min":10.941,"max":11.741,"unit":"mm"},"maleBoreID":{"nom":8.0,"min":7.7,"max":8.3,"unit":"mm"}}},{"id":"BSPT_R3-8","standard":"BSPT","designation":"R 3/8","nominalInch":"3/8\"","measurements":{"maleThreadOD":{"nom":16.662,"min":16.362,"max":16.962,"unit":"mm"},"femaleOpeningID":{"nom":14.846,"min":14.446,"max":15.246,"unit":"mm"},"maleBoreID":{"nom":10.0,"min":9.7,"max":10.3,"unit":"mm"}}},{"id":"BSPT_R1-2","standard":"BSPT","designation":"R 1/2","nominalInch":"1/2\"","measurements":{"maleThreadOD":{"nom":20.955,"min":20.655,"max":21.255,"unit":"mm"},"femaleOpeningID":{"nom":18.489,"min":18.089,"max":18.889,"unit":"mm"},"maleBoreID":{"nom":15.0,"min":14.7,"max":15.3,"unit":"mm"}}},{"id":"BSPT_R5-8","standard":"BSPT","designation":"R 5/8","nominalInch":"5/8\"","measurements":{"maleThreadOD":{"nom":22.911,"min":22.611,"max":23.211,"unit":"mm"},"femaleOpeningID":{"nom":20.587,"min":20.187,"max":20.987,"unit":"mm"},"maleBoreID":{"nom":17.0,"min":16.7,"max":17.3,"unit":"mm"}}},{"id":"BSPT_R3-4","standard":"BSPT","designation":"R 3/4","nominalInch":"3/4\"","measurements":{"maleThreadOD":{"nom":26.441,"min":26.141,"max":26.741,"unit":"mm"},"femaleOpeningID":{"nom":23.975,"min":23.575,"max":24.375,"unit":"mm"},"maleBoreID":{"nom":20.0,"min":19.7,"max":20.3,"unit":"mm"}}},{"id":"BSPT_R1","standard":"BSPT","designation":"R 1","nominalInch":"1\"","measurements":{"maleThreadOD":{"nom":33.249,"min":32.949,"max":33.549,"unit":"mm"},"femaleOpeningID":{"nom":30.111,"min":29.711,"max":30.511,"unit":"mm"},"maleBoreID":{"nom":25.0,"min":24.7,"max":25.3,"unit":"mm"}}},{"id":"NPT_1-8NPT","standard":"NPT","designation":"1/8 NPT","nominalInch":"1/8\"","measurements":{"maleThreadOD":{"nom":10.287,"min":9.987,"max":10.587,"unit":"mm"},"femaleOpeningID":{"nom":8.738,"min":8.338,"max":9.138,"unit":"mm"},"maleBoreID":{"nom":6.0,"min":5.7,"max":6.3,"unit":"mm"}}},{"id":"NPT_1-4NPT","standard":"NPT","designation":"1/4 NPT","nominalInch":"1/4\"","measurements":{"maleThreadOD":{"nom":13.716,"min":13.416,"max":14.016,"unit":"mm"},"femaleOpeningID":{"nom":11.125,"min":10.725,"max":11.525,"unit":"mm"},"maleBoreID":{"nom":8.0,"min":7.7,"max":8.3,"unit":"mm"}}},{"id":"NPT_3-8NPT","standard":"NPT","designation":"3/8 NPT","nominalInch":"3/8\"","measurements":{"maleThreadOD":{"nom":17.145,"min":16.845,"max":17.445,"unit":"mm"},"femaleOpeningID":{"nom":14.681,"min":14.281,"max":15.081,"unit":"mm"},"maleBoreID":{"nom":10.0,"min":9.7,"max":10.3,"unit":"mm"}}},{"id":"NPT_1-2NPT","standard":"NPT","designation":"1/2 NPT","nominalInch":"1/2\"","measurements":{"maleThreadOD":{"nom":21.336,"min":21.036,"max":21.636,"unit":"mm"},"femaleOpeningID":{"nom":18.263,"min":17.863,"max":18.663,"unit":"mm"},"maleBoreID":{"nom":15.0,"min":14.7,"max":15.3,"unit":"mm"}}},{"id":"NPT_5-8NPT","standard":"NPT","designation":"5/8 NPT","nominalInch":"5/8\"","measurements":{"maleThreadOD":{"nom":23.368,"min":23.068,"max":23.668,"unit":"mm"},"femaleOpeningID":{"nom":20.853,"min":20.453,"max":21.253,"unit":"mm"},"maleBoreID":{"nom":17.0,"min":16.7,"max":17.3,"unit":"mm"}}},{"id":"NPT_3-4NPT","standard":"NPT","designation":"3/4 NPT","nominalInch":"3/4\"","measurements":{"maleThreadOD":{"nom":26.67,"min":26.37,"max":26.97,"unit":"mm"},"femaleOpeningID":{"nom":23.419,"min":23.019,"max":23.819,"unit":"mm"},"maleBoreID":{"nom":20.0,"min":19.7,"max":20.3,"unit":"mm"}}},{"id":"NPT_1NPT","standard":"NPT","designation":"1 NPT","nominalInch":"1\"","measurements":{"maleThreadOD":{"nom":33.401,"min":33.101,"max":33.701,"unit":"mm"},"femaleOpeningID":{"nom":29.362,"min":28.962,"max":29.762,"unit":"mm"},"maleBoreID":{"nom":25.0,"min":24.7,"max":25.3,"unit":"mm"}}}]}}};
 
   var systemKey = null, sexKey = null;
   function el(id) { return document.getElementById(id); }
@@ -298,7 +308,7 @@ main {
     var entries = DATASET.systems[systemKey].entries;
     return systemKey === 'imperial' ? entries.filter(function(e) { return e.standard === 'BSPT'; }) : entries;
   }
-  function parseSel(val) { if (!val) return null; try { return JSON.parse(val); } catch(e) { return null; } }
+  function parseSel(val) { if (!val || val === 'unable') return null; try { return JSON.parse(val); } catch(e) { return null; } }
   function overlaps(aMin, aMax, bMin, bMax) { return Math.max(aMin, bMin) <= Math.min(aMax, bMax); }
   function scoreByOverlap(entry, selections) {
     var used = 0, score = 0;
@@ -351,12 +361,79 @@ main {
     var wrap = document.createElement('div'); wrap.className = 'input-group';
     var lab = document.createElement('label'); lab.setAttribute('for', id); lab.textContent = label;
     var sel = document.createElement('select'); sel.id = id;
-    var opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '— select a measured range —';
+    var opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '— Select a measured range —';
     sel.appendChild(opt0);
+    var optUM = document.createElement('option'); optUM.value = 'unable'; optUM.textContent = 'Unable to Measure';
+    sel.appendChild(optUM);
     options.forEach(function(o) { var opt = document.createElement('option'); opt.value = o.value; opt.textContent = o.text; sel.appendChild(opt); });
     wrap.appendChild(lab); wrap.appendChild(sel);
     return wrap;
   }
+  // Pipe OD reference data
+  var PIPE_OD = {
+    metric: [
+      { label: '4 mm',  value: 4 },
+      { label: '5 mm',  value: 5 },
+      { label: '6 mm',  value: 6 },
+      { label: '8 mm',  value: 8 },
+      { label: '10 mm', value: 10 },
+      { label: '12 mm', value: 12 }
+    ],
+    imperial: [
+      { label: '1/8″  (3.02–3.32 mm)',   value: 3.175 },
+      { label: '5/32″ (3.82–4.12 mm)',   value: 3.969 },
+      { label: '1/4″  (6.20–6.50 mm)',   value: 6.350 },
+      { label: '5/16″ (7.79–8.09 mm)',   value: 7.938 },
+      { label: '3/8″  (9.38–9.68 mm)',   value: 9.525 },
+      { label: '1/2″  (12.55–12.85 mm)', value: 12.700 }
+    ]
+  };
+
+  function buildPipeSelect() {
+    var section = document.createElement('div');
+    section.className = 'pipe-section';
+
+    var sectionLab = document.createElement('span');
+    sectionLab.className = 'pipe-section-label';
+    sectionLab.textContent = 'Plastic pipe outer diameter';
+    section.appendChild(sectionLab);
+
+    var selWrap = document.createElement('div');
+    selWrap.className = 'input-group';
+
+    var lab = document.createElement('label');
+    lab.setAttribute('for', 'selPipeOD');
+    lab.textContent = 'Pipe OD (if known)';
+
+    var sel = document.createElement('select');
+    sel.id = 'selPipeOD';
+
+    var opt0 = document.createElement('option');
+    opt0.value = ''; opt0.textContent = '— Select a measured range —';
+    sel.appendChild(opt0);
+    var optUM2 = document.createElement('option');
+    optUM2.value = 'unable'; optUM2.textContent = 'Unable to Measure';
+    sel.appendChild(optUM2);
+
+    PIPE_OD[systemKey].forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.value;
+      opt.textContent = p.label;
+      sel.appendChild(opt);
+    });
+
+    selWrap.appendChild(lab);
+    selWrap.appendChild(sel);
+    section.appendChild(selWrap);
+
+    var note = document.createElement('div');
+    note.className = 'pipe-section-note';
+    note.textContent = 'Selecting a pipe size helps confirm the fitting match but is not required.';
+    section.appendChild(note);
+
+    return section;
+  }
+
   function buildInputs() {
     var inputs = el('inputs'); inputs.innerHTML = '';
     var tol = DATASET.tolerancesMm;
@@ -365,6 +442,10 @@ main {
     var odOptions = uniqueBy(entriesForOD().map(function(e) { return buildRangeOption('maleThreadOD', e); }), function(o) { return o.text; });
     var femaleOptions = uniqueBy(entries.map(function(e) { return buildRangeOption('femaleOpeningID', e); }), function(o) { return o.text; });
     var boreOptions = uniqueBy(entries.filter(function(e) { return e.measurements.maleBoreID; }).map(function(e) { return buildRangeOption('maleBoreID', e); }), function(o) { return o.text; });
+
+    // Pipe OD always shown first
+    inputs.appendChild(buildPipeSelect());
+
     if (sexKey === 'male') {
       inputs.appendChild(buildSelect('selOD', 'Male thread outer diameter (OD)', odOptions));
       if (boreOptions.length) inputs.appendChild(buildSelect('selBore', 'Female thread inner diameter (ID)', boreOptions));
@@ -412,7 +493,7 @@ main {
     });
   }
   function clearSelections() {
-    ['selOD','selBore','selFemale'].forEach(function(id) { var e = el(id); if (e) e.value = ''; });
+    ['selPipeOD','selOD','selBore','selFemale'].forEach(function(id) { var e = el(id); if (e) e.value = ''; });
     el('results').innerHTML = '';
   }
   el('pickMetric').addEventListener('click', function() { setSystem('metric'); });
