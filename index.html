@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Thread ID Proof of Concept</title>
+  <style>
+    :root { --bg:#0b0f14; --card:#121923; --muted:#9db0c7; --text:#eaf2ff; --ok:#38d996; --warn:#ffcc66; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:18px 16px; border-bottom:1px solid #1e2a3a; }
+    header h1 { margin:0; font-size:18px; letter-spacing:.2px; }
+    header p { margin:6px 0 0; color:var(--muted); font-size:13px; }
+    main { padding:16px; max-width:980px; margin:0 auto; }
+    .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); }
+    .card { background:var(--card); border:1px solid #1e2a3a; border-radius:12px; padding:14px; }
+    .card h2 { margin:0 0 8px; font-size:14px; }
+    .card p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.35; }
+    .btnrow { display:flex; gap:10px; flex-wrap:wrap; }
+    button { background:#172233; border:1px solid #2a3a52; color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
+    button.primary { background:linear-gradient(180deg, #2b7cff, #1e5fe0); border:1px solid #2b7cff; }
+    button.ghost { background:transparent; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .step { margin:14px 0; }
+    .stepTitle { display:flex; justify-content:space-between; align-items:flex-end; gap:10px; }
+    .stepTitle h3 { margin:0; font-size:13px; color:#cfe3ff; }
+    .pill { font-size:12px; color:var(--muted); }
+    label { display:block; margin:10px 0 6px; color:#cfe3ff; font-size:12px; }
+    select { width:100%; padding:10px; border-radius:10px; border:1px solid #2a3a52; background:#0f1621; color:var(--text); }
+    .results { margin-top:12px; }
+    .result { border:1px solid #22334a; border-radius:12px; padding:12px; background:#0f1621; }
+    .result + .result { margin-top:10px; }
+    .badge { display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; margin-left:8px; }
+    .best { background:rgba(56,217,150,.15); border:1px solid rgba(56,217,150,.45); color:var(--ok); }
+    .alt { background:rgba(255,204,102,.12); border:1px solid rgba(255,204,102,.45); color:var(--warn); }
+    .muted { color:var(--muted); font-size:12px; }
+    .kvs { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:8px; }
+    .kv { background:#0b111a; border:1px solid #1e2a3a; border-radius:10px; padding:10px; }
+    .kv b { display:block; font-size:12px; }
+    .kv span { color:var(--muted); font-size:12px; }
+    footer { padding:16px; color:var(--muted); font-size:12px; border-top:1px solid #1e2a3a; margin-top:20px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Thread ID – Visual + Vernier Proof of Concept</h1>
+  <p>Pick what it looks like first, then confirm with vernier-friendly measurement ranges (mm). This is a workshop identification aid, not a machining spec.</p>
+</header>
+<main>
+  <div class="grid">
+    <div class="card" id="step1">
+      <h2>1) Visual check</h2>
+      <p>Select the path that matches what you can see. (Heuristic: metric is often parallel + O‑ring; imperial pipe threads are often tapered.)</p>
+      <div class="btnrow">
+        <button class="primary" id="btnMetric">Metric-looking (parallel / O-ring)</button>
+        <button class="primary" id="btnImperial">Imperial-looking (tapered)</button>
+        <button class="ghost" id="btnReset" title="Reset">Reset</button>
+      </div>
+      <p class="muted" id="chosenSystem"></p>
+    </div>
+
+    <div class="card" id="step2">
+      <h2>2) What are you measuring?</h2>
+      <p>Choose the fitting end type. You can leave any measurement as “Not sure / can’t measure”.</p>
+      <div class="btnrow">
+        <button id="btnMale" disabled>Male end</button>
+        <button id="btnFemale" disabled>Female end</button>
+        <button id="btnUnsure" disabled>Not sure</button>
+      </div>
+      <p class="muted" id="chosenSex"></p>
+    </div>
+  </div>
+
+  <div class="card step" id="step3" style="display:none">
+    <div class="stepTitle">
+      <h3>3) Select the closest measured range (all in mm)</h3>
+      <div class="pill" id="tolInfo"></div>
+    </div>
+
+    <div id="inputs"></div>
+
+    <div class="btnrow" style="margin-top:12px">
+      <button class="primary" id="btnFind">Find matches</button>
+      <button class="ghost" id="btnClear">Clear selections</button>
+    </div>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <footer>
+    <div><b>Tip:</b> For female openings, the inside jaws of a vernier tend to land on the thread roots, so the value is closer to the <i>minor diameter</i> than the major. That’s why the ranges here use minor / tap-drill proxies.</div>
+  </footer>
+</main>
+
+<script>
+const DATASET = {
+  "schemaVersion": "1.0",
+  "purpose": "Rapid thread identification using visual cues + vernier-friendly measurement ranges (workshop guide, not machining spec).",
+  "tolerancesMm": {
+    "maleThreadOD": 0.3,
+    "maleBoreID": 0.3,
+    "femaleOpeningID": 0.4
+  },
+  "measurementDefinitions": {
+    "maleThreadOD": "Outside diameter of male thread (vernier across crests).",
+    "femaleOpeningID": "Inside diameter at mouth of female thread (vernier inside jaws across thread roots / minor diameter).",
+    "maleBoreID": "Approximate bore/through-hole at the male end (varies by fitting design; treat as supporting clue)."
+  },
+  "systems": {
+    "metric": {
+      "label": "Metric (parallel, usually O-ring face seal)",
+      "visualCues": [
+        "parallel",
+        "often_o_ring"
+      ],
+      "entries": [
+        {
+          "id": "METRIC_M5",
+          "standard": "ISO metric (coarse)",
+          "designation": "M5 x 0.8",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 5.0,
+              "min": 4.7,
+              "max": 5.3,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 4.2,
+              "min": 3.8,
+              "max": 4.6,
+              "unit": "mm"
+            },
+            "maleBoreID": null
+          },
+          "notes": [
+            "Metric fittings in pneumatics are usually parallel and often seal with an O-ring at the face.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "METRIC_M6",
+          "standard": "ISO metric (coarse)",
+          "designation": "M6 x 1.0",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 6.0,
+              "min": 5.7,
+              "max": 6.3,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 5.0,
+              "min": 4.6,
+              "max": 5.4,
+              "unit": "mm"
+            },
+            "maleBoreID": null
+          },
+          "notes": [
+            "Metric fittings in pneumatics are usually parallel and often seal with an O-ring at the face.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "METRIC_M8",
+          "standard": "ISO metric (coarse)",
+          "designation": "M8 x 1.25",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 8.0,
+              "min": 7.7,
+              "max": 8.3,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 6.8,
+              "min": 6.4,
+              "max": 7.2,
+              "unit": "mm"
+            },
+            "maleBoreID": null
+          },
+          "notes": [
+            "Metric fittings in pneumatics are usually parallel and often seal with an O-ring at the face.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "METRIC_M10",
+          "standard": "ISO metric (coarse)",
+          "designation": "M10 x 1.5",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 10.0,
+              "min": 9.7,
+              "max": 10.3,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 8.5,
+              "min": 8.1,
+              "max": 8.9,
+              "unit": "mm"
+            },
+            "maleBoreID": null
+          },
+          "notes": [
+            "Metric fittings in pneumatics are usually parallel and often seal with an O-ring at the face.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "METRIC_M12",
+          "standard": "ISO metric (coarse)",
+          "designation": "M12 x 1.75",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 12.0,
+              "min": 11.7,
+              "max": 12.3,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 10.2,
+              "min": 9.8,
+              "max": 10.6,
+              "unit": "mm"
+            },
+            "maleBoreID": null
+          },
+          "notes": [
+            "Metric fittings in pneumatics are usually parallel and often seal with an O-ring at the face.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        }
+      ]
+    },
+    "imperial": {
+      "label": "Imperial pipe threads (often tapered: BSPT / NPT)",
+      "visualCues": [
+        "tapered"
+      ],
+      "entries": [
+        {
+          "id": "BSPT_R1/8",
+          "standard": "BSPT",
+          "designation": "R 1/8",
+          "nominalInch": "1/8\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 9.728,
+              "min": 9.428,
+              "max": 10.028,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 8.495,
+              "min": 8.095,
+              "max": 8.895,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 6.0,
+              "min": 5.7,
+              "max": 6.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "BSPT uses ISO 7 (R external).",
+            "Not interchangeable with NPT in most cases (different thread form/pitch/angle)."
+          ]
+        },
+        {
+          "id": "BSPT_R1/4",
+          "standard": "BSPT",
+          "designation": "R 1/4",
+          "nominalInch": "1/4\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 13.157,
+              "min": 12.857,
+              "max": 13.457,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 11.341,
+              "min": 10.941,
+              "max": 11.741,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 8.0,
+              "min": 7.7,
+              "max": 8.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "BSPT uses ISO 7 (R external).",
+            "Not interchangeable with NPT in most cases (different thread form/pitch/angle)."
+          ]
+        },
+        {
+          "id": "BSPT_R3/8",
+          "standard": "BSPT",
+          "designation": "R 3/8",
+          "nominalInch": "3/8\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 16.662,
+              "min": 16.362,
+              "max": 16.962,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 14.846,
+              "min": 14.446,
+              "max": 15.246,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 10.0,
+              "min": 9.7,
+              "max": 10.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "BSPT uses ISO 7 (R external).",
+            "Not interchangeable with NPT in most cases (different thread form/pitch/angle)."
+          ]
+        },
+        {
+          "id": "BSPT_R1/2",
+          "standard": "BSPT",
+          "designation": "R 1/2",
+          "nominalInch": "1/2\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 20.955,
+              "min": 20.655,
+              "max": 21.255,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 18.489,
+              "min": 18.089,
+              "max": 18.889,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 15.0,
+              "min": 14.7,
+              "max": 15.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "BSPT uses ISO 7 (R external).",
+            "Not interchangeable with NPT in most cases (different thread form/pitch/angle)."
+          ]
+        },
+        {
+          "id": "BSPT_R3/4",
+          "standard": "BSPT",
+          "designation": "R 3/4",
+          "nominalInch": "3/4\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 26.441,
+              "min": 26.141,
+              "max": 26.741,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 23.975,
+              "min": 23.575,
+              "max": 24.375,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 20.0,
+              "min": 19.7,
+              "max": 20.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "BSPT uses ISO 7 (R external).",
+            "Not interchangeable with NPT in most cases (different thread form/pitch/angle)."
+          ]
+        },
+        {
+          "id": "BSPT_R1",
+          "standard": "BSPT",
+          "designation": "R 1",
+          "nominalInch": "1\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 33.249,
+              "min": 32.949,
+              "max": 33.549,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 30.111,
+              "min": 29.711,
+              "max": 30.511,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 25.0,
+              "min": 24.7,
+              "max": 25.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "BSPT uses ISO 7 (R external).",
+            "Not interchangeable with NPT in most cases (different thread form/pitch/angle)."
+          ]
+        },
+        {
+          "id": "NPT_1-8NPT",
+          "standard": "NPT",
+          "designation": "1/8 NPT",
+          "nominalInch": "1/8\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 10.287,
+              "min": 9.987,
+              "max": 10.587,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 8.738,
+              "min": 8.338,
+              "max": 9.138,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 6.0,
+              "min": 5.7,
+              "max": 6.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "NPT is ASME B1.20.1 tapered pipe thread.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "NPT_1-4NPT",
+          "standard": "NPT",
+          "designation": "1/4 NPT",
+          "nominalInch": "1/4\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 13.716,
+              "min": 13.416,
+              "max": 14.016,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 11.125,
+              "min": 10.725,
+              "max": 11.525,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 8.0,
+              "min": 7.7,
+              "max": 8.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "NPT is ASME B1.20.1 tapered pipe thread.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "NPT_3-8NPT",
+          "standard": "NPT",
+          "designation": "3/8 NPT",
+          "nominalInch": "3/8\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 17.145,
+              "min": 16.845,
+              "max": 17.445,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 14.681,
+              "min": 14.281,
+              "max": 15.081,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 10.0,
+              "min": 9.7,
+              "max": 10.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "NPT is ASME B1.20.1 tapered pipe thread.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "NPT_1-2NPT",
+          "standard": "NPT",
+          "designation": "1/2 NPT",
+          "nominalInch": "1/2\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 21.336,
+              "min": 21.036,
+              "max": 21.636,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 18.263,
+              "min": 17.863,
+              "max": 18.663,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 15.0,
+              "min": 14.7,
+              "max": 15.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "NPT is ASME B1.20.1 tapered pipe thread.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "NPT_3-4NPT",
+          "standard": "NPT",
+          "designation": "3/4 NPT",
+          "nominalInch": "3/4\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 26.67,
+              "min": 26.37,
+              "max": 26.97,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 23.419,
+              "min": 23.019,
+              "max": 23.819,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 20.0,
+              "min": 19.7,
+              "max": 20.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "NPT is ASME B1.20.1 tapered pipe thread.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        },
+        {
+          "id": "NPT_1NPT",
+          "standard": "NPT",
+          "designation": "1 NPT",
+          "nominalInch": "1\"",
+          "measurements": {
+            "maleThreadOD": {
+              "nom": 33.401,
+              "min": 33.101,
+              "max": 33.701,
+              "unit": "mm"
+            },
+            "femaleOpeningID": {
+              "nom": 29.362,
+              "min": 28.962,
+              "max": 29.762,
+              "unit": "mm"
+            },
+            "maleBoreID": {
+              "nom": 25.0,
+              "min": 24.7,
+              "max": 25.3,
+              "unit": "mm"
+            }
+          },
+          "notes": [
+            "NPT is ASME B1.20.1 tapered pipe thread.",
+            "Tap drill size used here as a practical proxy for female opening ID (minor diameter)."
+          ]
+        }
+      ]
+    }
+  }
+};
+
+let systemKey = null;   // 'metric' | 'imperial'
+let sexKey = null;      // 'male' | 'female' | 'unsure'
+
+const el = (id)=>document.getElementById(id);
+
+function resetAll() {
+  systemKey = null; sexKey = null;
+  el('chosenSystem').textContent = '';
+  el('chosenSex').textContent = '';
+  ['btnMale','btnFemale','btnUnsure'].forEach(i=>el(i).disabled=true);
+  el('step3').style.display = 'none';
+  el('inputs').innerHTML = '';
+  el('results').innerHTML = '';
+}
+
+function setSystem(key) {
+  systemKey = key;
+  const label = DATASET.systems[key].label;
+  el('chosenSystem').textContent = `Chosen: ${label}`;
+  ['btnMale','btnFemale','btnUnsure'].forEach(i=>el(i).disabled=false);
+  sexKey = null;
+  el('chosenSex').textContent = '';
+  el('step3').style.display = 'none';
+  el('inputs').innerHTML = '';
+  el('results').innerHTML = '';
+}
+
+function setSex(key) {
+  sexKey = key;
+  el('chosenSex').textContent = `Chosen: ${key}`;
+  buildInputs();
+  el('step3').style.display = 'block';
+  el('results').innerHTML = '';
+}
+
+function rangeLabel(r) {
+  return `${r.min.toFixed(2)}–${r.max.toFixed(2)} mm`;
+}
+
+function buildSelect(id, label, options) {
+  const wrap = document.createElement('div');
+  const lab = document.createElement('label');
+  lab.setAttribute('for', id);
+  lab.textContent = label;
+  const sel = document.createElement('select');
+  sel.id = id;
+  const opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = "Not sure / can't measure";
+  sel.appendChild(opt0);
+  for (const o of options) {
+    const opt = document.createElement('option');
+    opt.value = o.value;
+    opt.textContent = o.text;
+    sel.appendChild(opt);
+  }
+  wrap.appendChild(lab);
+  wrap.appendChild(sel);
+  return wrap;
+}
+
+function uniqueBy(arr, keyFn) {
+  const seen = new Set();
+  const out = [];
+  for (const item of arr) {
+    const k = keyFn(item);
+    if (!seen.has(k)) { seen.add(k); out.push(item); }
+  }
+  return out;
+}
+
+function buildRangeOption(measKey, entry) {
+  const r = entry.measurements[measKey];
+  return {
+    value: JSON.stringify({ key: measKey, min: r.min, max: r.max }),
+    text: `${entry.designation} (${entry.standard}) — ${rangeLabel(r)}`
+  };
+}
+
+function buildInputs() {
+  const inputs = el('inputs');
+  inputs.innerHTML = '';
+
+  const tol = DATASET.tolerancesMm;
+  el('tolInfo').textContent = `Tolerance model: OD ±${tol.maleThreadOD} mm, bore ±${tol.maleBoreID} mm, female opening ±${tol.femaleOpeningID} mm`;
+
+  const entries = DATASET.systems[systemKey].entries;
+
+  const odOptions = uniqueBy(
+    entries.map(e=>buildRangeOption('maleThreadOD', e)),
+    o=>o.value
+  );
+
+  const femaleOptions = uniqueBy(
+    entries.map(e=>buildRangeOption('femaleOpeningID', e)),
+    o=>o.value
+  );
+
+  const boreEntries = entries.filter(e=>e.measurements.maleBoreID);
+  const boreOptions = uniqueBy(
+    boreEntries.map(e=>buildRangeOption('maleBoreID', e)),
+    o=>o.value
+  );
+
+  if (sexKey === 'male') {
+    inputs.appendChild(buildSelect('selOD', 'Male thread OD (vernier across thread crests)', odOptions));
+    if (boreOptions.length) inputs.appendChild(buildSelect('selBore', 'Male bore ID (optional supporting clue)', boreOptions));
+  } else if (sexKey === 'female') {
+    inputs.appendChild(buildSelect('selFemale', 'Female opening ID at mouth (vernier inside jaws)', femaleOptions));
+  } else {
+    inputs.appendChild(buildSelect('selOD', 'Male thread OD (if applicable)', odOptions));
+    if (boreOptions.length) inputs.appendChild(buildSelect('selBore', 'Male bore ID (optional)', boreOptions));
+    inputs.appendChild(buildSelect('selFemale', 'Female opening ID at mouth (if applicable)', femaleOptions));
+  }
+}
+
+function parseSel(val) {
+  if (!val) return null;
+  try { return JSON.parse(val); } catch { return null; }
+}
+
+function overlaps(aMin, aMax, bMin, bMax) {
+  return Math.max(aMin, bMin) <= Math.min(aMax, bMax);
+}
+
+function scoreByOverlap(entry, selections) {
+  let used = 0, score = 0;
+  const expl = [];
+
+  for (const s of selections) {
+    if (!s) continue;
+    used++;
+    const r = entry.measurements[s.key];
+    if (!r) { expl.push(`${s.key}: n/a`); continue; }
+    const ok = overlaps(r.min, r.max, s.min, s.max);
+    if (ok) score++;
+    expl.push(`${s.key}: ${ok ? 'match' : 'no match'}`);
+  }
+
+  return {used, score, expl};
+}
+
+function findMatches() {
+  const entries = DATASET.systems[systemKey].entries;
+
+  const selOD = el('selOD') ? parseSel(el('selOD').value) : null;
+  const selBore = el('selBore') ? parseSel(el('selBore').value) : null;
+  const selFemale = el('selFemale') ? parseSel(el('selFemale').value) : null;
+
+  const selections = [selOD, selBore, selFemale].filter(Boolean);
+
+  const out = el('results');
+  out.innerHTML = '';
+
+  if (!selections.length) {
+    out.innerHTML = '<p class="muted">Select at least one measurement range to get a match.</p>';
+    return;
+  }
+
+  const scored = entries.map(e=>({ e, ...scoreByOverlap(e, selections) }))
+    .filter(x=>x.used>0 && x.score>0)
+    .sort((a,b)=> (b.score/b.used) - (a.score/a.used));
+
+  if (!scored.length) {
+    out.innerHTML = '<p class="muted">No matches for the selected ranges. Try clearing one field or switch system (metric/imperial).</p>';
+    return;
+  }
+
+  const bestRatio = scored[0].score / scored[0].used;
+
+  for (const s of scored) {
+    const ratio = s.score / s.used;
+    const div = document.createElement('div');
+    div.className = 'result';
+
+    const badge = (ratio === bestRatio)
+      ? '<span class="badge best">Best match</span>'
+      : '<span class="badge alt">Also close</span>';
+
+    const m = s.e.measurements;
+    const bore = m.maleBoreID ? `<div class="kv"><b>Male bore ID</b><span>${rangeLabel(m.maleBoreID)}</span></div>` : '';
+
+    div.innerHTML = `
+      <div>
+        <b>${s.e.designation}</b> (${s.e.standard}) ${badge}
+        <div class="muted">Confidence: ${s.score}/${s.used} selected ranges matched</div>
+      </div>
+      <div class="kvs">
+        <div class="kv"><b>Male thread OD</b><span>${rangeLabel(m.maleThreadOD)}</span></div>
+        <div class="kv"><b>Female opening ID</b><span>${rangeLabel(m.femaleOpeningID)}</span></div>
+        ${bore}
+      </div>
+      <div class="muted" style="margin-top:8px">${s.e.notes.join(' ')}</div>
+    `;
+    out.appendChild(div);
+  }
+
+  if (systemKey === 'imperial') {
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.style.marginTop = '10px';
+    note.textContent = 'Imperial path: measurements are shown in mm to suit metric verniers; the designation remains imperial (R / NPT).';
+    out.appendChild(note);
+  }
+}
+
+function clearSelections() {
+  ['selOD','selBore','selFemale'].forEach(id=>{ if (el(id)) el(id).value = ''; });
+  el('results').innerHTML = '';
+}
+
+el('btnMetric').addEventListener('click', ()=>setSystem('metric'));
+el('btnImperial').addEventListener('click', ()=>setSystem('imperial'));
+el('btnReset').addEventListener('click', resetAll);
+
+el('btnMale').addEventListener('click', ()=>setSex('male'));
+el('btnFemale').addEventListener('click', ()=>setSex('female'));
+el('btnUnsure').addEventListener('click', ()=>setSex('unsure'));
+
+el('btnFind').addEventListener('click', findMatches);
+el('btnClear').addEventListener('click', clearSelections);
+
+resetAll();
+</script>
+</body>
+</html>
