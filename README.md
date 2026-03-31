@@ -1,11 +1,9 @@
 # Thread Finder PoC v3
 
+Identify metric nd imperial pipe threads based on visual prompt and basic measurements
+
 ## Files
 - index.html
-- app.js
-- dataset.json
-- metric.png (your O-ring selector image)
-- imperial.png (your tapered selector image)
 
 ## Change made
 Imperial OD dropdown now uses **BSPT only** (R sizes). This removes the second OD range set (NPT) that looked like duplicates.
